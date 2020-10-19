@@ -9,39 +9,59 @@ defmodule Servy.Handler do
 
   def log(conv),  do: IO.inspect conv
 
-  @spec parse(any) :: %{method: <<_::24>>, path: <<_::88>>, resp_body: <<>>}
   def parse(request) do
     [method, path, _] =
     request
     |> String.split("\n")
     |> List.first
     |> String.split(" ")
-    %{method: method, path: path, resp_body: ""}
+    %{ method: method,
+       path: path,
+       resp_body: "",
+       status: nil
+      }
   end
 
-  @spec route(any) :: %{method: <<_::24>>, path: <<_::88>>, resp_body: <<_::160>>}
   def route(conv) do
     route(conv, conv.method, conv.path)
   end
 
-  @spec route(%{resp_body: any}, <<_::48, _::_*40>>) :: %{resp_body: <<_::64, _::_*96>>}
-  def route(conv,"GET", "/wildthings") do
-    %{conv | resp_body: "Graffalo"}
+  def route(conv, "GET", "/wildthings") do
+    %{conv |  resp_body: "Gruffalo"}
   end
 
-  def route(conv,"GET", "/bears") do
-    %{conv | resp_body: "Teddy and Paddington"}
+  def route(conv, "GET", "/bears") do
+    %{conv |  resp_body: "Teddy and Paddington"}
   end
 
-  @spec format_response(any) :: <<_::648>>
+  def route(conv, "GET", "/bears/" <> id) do
+    %{conv |  resp_body: "Bear #{id}" }
+  end
+
+  def route(conv, _method, path) do
+    %{conv |  resp_body: "No #{path} here!"}
+  end
+
+
   def format_response(conv) do
     """
-    HTTP/1.1 200 OK
+    HTTP/1.1 #{conv.status} #{status_reason(conv.status)}
     Content-Type: text/html
     Content-Length: #{String.length(conv.resp_body)}
 
     #{conv.resp_body}
     """
+  end
+
+  defp status_reason(code) do
+    %{
+      200 => "OK",
+      201 => "Created",
+      401 => "Unauthorized",
+      403 => "Forbidden",
+      404 => "Not Found",
+      500 => "Internal Server Error"
+      }[code]
   end
 end
 request = """
@@ -54,9 +74,18 @@ Accept: */*
 response = Servy.Handler.handle(request)
 IO.puts response
 
-
 request = """
 GET /bears HTTP/1.1
+HOST: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+response = Servy.Handler.handle(request)
+IO.puts response
+
+request = """
+GET /bears/1 HTTP/1.1
 HOST: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
