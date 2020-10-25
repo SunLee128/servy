@@ -1,5 +1,4 @@
 defmodule Servy.Handler do
-
   @moduledoc "Handles HTTP requests."
 
   alias Servy.Conv
@@ -21,46 +20,50 @@ defmodule Servy.Handler do
     |> format_response
   end
 
-  def route(%Conv{ method: "GET", path: "/wildthings" } = conv) do
+  def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
     params = %{}
-    %{ conv | status: 200, resp_body: "Bears, Lions, Tigers" }
+    %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
   end
 
-  def route(%Conv{ method: "GET", path: "/bears" } = conv) do
+  def route(%Conv{method: "GET", path: "/bears"} = conv) do
     BearController.index(conv)
   end
 
-  def route(%Conv{ method: "GET", path: "/bears/" <> id } = conv) do
+  def route(%Conv{method: "GET", path: "/bears/" <> id} = conv) do
     params = Map.put(conv.params, "id", id)
     BearController.show(conv, params)
   end
 
   # name=Baloo&type=Brown
-  def route(%Conv{ method: "POST", path: "/bears/"} = conv) do
+  def route(%Conv{method: "POST", path: "/bears/"} = conv) do
     BearController.create(conv, conv.params)
   end
 
-  def route(%Conv{method: "GET", path: "/about"} = conv) do
-      @pages_path
-      |> Path.join("about.html")
-      |> File.read
-      |> handle_file(conv)
+  def route(%Conv{method: "DELETE", path: "/bears/" <> id} = conv) do
+    BearController.delete(conv, conv.params)
   end
 
-  def route(%Conv{ path: path } = conv) do
-    %{ conv | status: 404, resp_body: "No #{path} here!"}
+  def route(%Conv{method: "GET", path: "/about"} = conv) do
+    @pages_path
+    |> Path.join("about.html")
+    |> File.read()
+    |> handle_file(conv)
+  end
+
+  def route(%Conv{path: path} = conv) do
+    %{conv | status: 404, resp_body: "No #{path} here!"}
   end
 
   def handle_file({:ok, content}, conv) do
-    %{ conv | status: 200, resp_body: content }
+    %{conv | status: 200, resp_body: content}
   end
 
   def handle_file({:error, :enoent}, conv) do
-    %{ conv | status: 404, resp_body: "File not found!" }
+    %{conv | status: 404, resp_body: "File not found!"}
   end
 
   def handle_file({:error, reason}, conv) do
-    %{ conv | status: 500, resp_body: "File error: #{reason}" }
+    %{conv | status: 500, resp_body: "File error: #{reason}"}
   end
 
   def format_response(%Conv{} = conv) do
@@ -99,7 +102,7 @@ name=Baloo&type=Brown
 
 response = Servy.Handler.handle(request)
 
-IO.puts response
+IO.puts(response)
 
 # request = """
 # GET /bigfoot HTTP/1.1
@@ -137,7 +140,6 @@ IO.puts response
 
 # IO.puts response
 
-
 request = """
 GET /about HTTP/1.1
 Host: example.com
@@ -148,4 +150,4 @@ Accept: */*
 
 response = Servy.Handler.handle(request)
 
-IO.puts response
+IO.puts(response)

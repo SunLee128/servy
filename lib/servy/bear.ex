@@ -1,6 +1,7 @@
 defmodule Servy.Bear do
   defstruct id: nil, name: "", type: "", hibernating: false
 
+  @spec is_grizzly(atom | %{type: any}) :: boolean
   def is_grizzly(bear) do
     bear.type == "Grizzly"
   end
